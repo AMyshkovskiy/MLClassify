@@ -61,4 +61,37 @@ public class App
         //myCategorizer.getAllResults()
     }
 
+    public DoccatModel trainingModel(final String specFile) throws IOException {
+        InputStreamFactory dataIn = new InputStreamFactory() {
+            @Override
+            public InputStream createInputStream() throws IOException {
+                return new FileInputStream(specFile);
+            }
+        };
+        DoccatModel model = null;
+        TrainingParameters trparam = new TrainingParameters();
+        trparam.put("Iterations", 500);
+        //trparam.put("Algorithm", "NAIVEBAYES");
+        DoccatFactory docfactory = new DoccatFactory();
+        ObjectStream<String> lineStream =
+                new PlainTextByLineStream(dataIn, StandardCharsets.UTF_8);
+        ObjectStream<DocumentSample> sampleStream = new DocumentSampleStream(lineStream);
+
+        model = DocumentCategorizerME.train("ru", sampleStream, trparam, docfactory);
+        //String modelFile = "modelfile";
+
+        return model;
+    }
+
+    public void serializeModel(DoccatModel model, String modelFile) throws IOException {
+        try (OutputStream modelOut = new BufferedOutputStream(new FileOutputStream(modelFile))) {
+            model.serialize(modelOut);
+        }
+    }
+
+    public void trainAndSerialize(String specFile, String modelFile) throws IOException {
+        DoccatModel model = trainingModel(specFile);
+        serializeModel(model, modelFile);
+    }
+
 }
